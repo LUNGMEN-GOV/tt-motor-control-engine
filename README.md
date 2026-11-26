@@ -37,7 +37,7 @@ circuit on overcurrent, undervoltage or overtemperature.
   interlock; PWM remains disabled until software clears the inactive fault.
 
 The official 1x1 SKY130 flow is clean at 10 MHz: worst setup/hold slack is
-+55.04/+0.11 ns, with zero setup/hold, routed DRC, Magic DRC, LVS and antenna
++54.33/+0.11 ns, with zero setup/hold, routed DRC, Magic DRC, LVS and antenna
 violations. See [performance and physical signoff](docs/performance.md) for the
 full evidence and the limits of the estimate.
 

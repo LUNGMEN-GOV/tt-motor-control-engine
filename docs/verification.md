@@ -19,7 +19,7 @@ The self-checking ModelSim testbench covers:
 Run `vsim -c -do run_modelsim.do` from `test`. The expected marker is
 `TINY_MCE_TEST_PASS`.
 
-The official Tiny Tapeout run for commit `4b7b279` completed a 1x1 layout with
+The official Tiny Tapeout run for commit `0ddd627` completed a 1x1 layout with
 zero setup/hold, route/Magic DRC, LVS and antenna violations. The test, precheck,
 gate-level test and documentation jobs also passed. Detailed metrics and the
 remaining physical limitations are recorded in [performance.md](performance.md).

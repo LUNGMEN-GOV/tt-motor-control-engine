@@ -3,35 +3,35 @@
 ## ASIC target at 10 MHz
 
 The following values were produced by the official Tiny Tapeout SKY130 GDS run
-for RTL commit `4b7b2795bac388302368da314c4bfa492c0656fd`:
+for RTL commit `0ddd627fdfcb5d5911252537a33f260d6bf21c0a`:
 
 | Item | Result |
 |---|---:|
 | Tiny Tapeout size | 1x1 tile |
 | Die template | 161 x 111.52 um |
-| Synthesized standard-cell area | 10,203.536 um2 |
-| Final instance utilization | 81.95% |
-| Worst setup slack | +55.04 ns |
-| Worst hold slack | +0.11 ns |
+| Synthesized standard-cell area | 10,217.299 um2 |
+| Final instance utilization | 82.38% |
+| Worst setup slack | +54.33 ns |
+| Worst hold slack | +0.112 ns |
 | Setup / hold violations | 0 / 0 |
 | Routed DRC / Magic DRC | 0 / 0 |
 | LVS / antenna violations | 0 / 0 |
-| Routed wire length / vias | 36,863 um / 9,204 |
+| Routed wire length / vias | 41,623 um / 9,767 |
 
 The official GDS, precheck, gate-level simulation and documentation jobs all
 passed. Final utilization is deliberately high to retain the useful feature set
-inside one tile. These figures describe commit `4b7b279`; the reset/fault
-interlock correction must complete a fresh full physical flow before its
-submission signoff supersedes these numbers.
+inside one tile, so the tapeout RTL should now be treated as frozen unless the
+full physical flow is repeated.
 
 The OpenLane report still records non-fatal maximum-slew warnings (worst count
-178 at the slow 100 C / 1.60 V corner) and one maximum-fanout warning. They did
-not fail the official Tiny Tapeout acceptance workflow, but they mean this is a
-Tiny Tapeout submission-ready block rather than an independently qualified
-production ASIC. Silicon characterization remains required.
+209 at the slow 100 C / 1.60 V corner), one maximum-fanout warning and one
+maximum-capacitance warning. They did not fail the official Tiny Tapeout
+acceptance workflow, but they mean this is a Tiny Tapeout submission-ready
+block rather than an independently qualified production ASIC. Silicon
+characterization remains required.
 
-The +55.04 ns setup margin on a 100 ns clock implies an approximate critical
-path of 44.96 ns, or about 22.2 MHz. This is a timing-margin estimate, not a new
+The +54.33 ns setup margin on a 100 ns clock implies an approximate critical
+path of 45.67 ns, or about 21.9 MHz. This is a timing-margin estimate, not a new
 qualified operating point: the supported tapeout target remains 10 MHz.
 
 ## Functional throughput
