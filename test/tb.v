@@ -218,7 +218,7 @@ module tb;
     enc0_state(0, 0);
     enc0_state(1, 1);
     spi_read(7'h14, value);
-    check(value == 8'd1, "illegal quadrature transition increments error count");
+    check(value == 8'd1, "illegal quadrature transition reports an error flag");
     spi_read(7'h09, value);
     check(value[3] == 1'b1, "illegal ENC0 transition raises event flag");
 

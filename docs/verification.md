@@ -11,7 +11,7 @@ The self-checking ModelSim testbench covers:
 - synchronized fault latching, IRQ generation and W1C interlock;
 - forward and reverse x4 quadrature decoding on channel 0;
 - independent counting on channel 1;
-- illegal quadrature transition detection and saturation counter path;
+- illegal quadrature transition detection and sticky event flags;
 - 100 ns input capture and timer compare events;
 - `ena=0` masking all dedicated outputs and leaving all uio pins as inputs.
 

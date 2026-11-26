@@ -61,13 +61,11 @@ module tiny_mce (
   reg [5:0] deadtime;
   reg [4:0] irq_mask;
   reg [4:0] event_flags;
-  reg [15:0] enc0_count;
-  reg [15:0] enc1_count;
-  reg [7:0] enc0_errors;
-  reg [7:0] enc1_errors;
-  reg [15:0] timer_count;
-  reg [15:0] capture_value;
-  reg [15:0] timer_compare;
+  reg [11:0] enc0_count;
+  reg [11:0] enc1_count;
+  reg [11:0] timer_count;
+  reg [11:0] capture_value;
+  reg [7:0] timer_compare;
 
   wire pwm_enable = control[0];
   wire compare_enable = control[1];
@@ -111,42 +109,26 @@ module tiny_mce (
 
   wire capture_rise = capture_sync && !capture_prev;
 
-  function quad_forward;
-    input [1:0] previous;
-    input [1:0] current;
-    begin
-      case ({previous, current})
-        4'b0001, 4'b0111, 4'b1110, 4'b1000: quad_forward = 1'b1;
-        default: quad_forward = 1'b0;
-      endcase
-    end
-  endfunction
-
-  function quad_reverse;
-    input [1:0] previous;
-    input [1:0] current;
-    begin
-      case ({previous, current})
-        4'b0010, 4'b1011, 4'b1101, 4'b0100: quad_reverse = 1'b1;
-        default: quad_reverse = 1'b0;
-      endcase
-    end
-  endfunction
-
-  wire enc0_changed = enc_sync[1:0] != enc0_prev;
-  wire enc1_changed = enc_sync[3:2] != enc1_prev;
-  wire enc0_forward = quad_forward(enc0_prev, enc_sync[1:0]);
-  wire enc0_reverse = quad_reverse(enc0_prev, enc_sync[1:0]);
-  wire enc1_forward = quad_forward(enc1_prev, enc_sync[3:2]);
-  wire enc1_reverse = quad_reverse(enc1_prev, enc_sync[3:2]);
-  wire enc0_invalid = enable && enc0_changed && !enc0_forward && !enc0_reverse;
-  wire enc1_invalid = enable && enc1_changed && !enc1_forward && !enc1_reverse;
+  /* Compact quadrature decoder: a valid edge changes exactly one input. */
+  wire [1:0] enc0_delta = enc_sync[1:0] ^ enc0_prev;
+  wire [1:0] enc1_delta = enc_sync[3:2] ^ enc1_prev;
+  wire enc0_changed = |enc0_delta;
+  wire enc1_changed = |enc1_delta;
+  wire enc0_invalid = enable && &enc0_delta;
+  wire enc1_invalid = enable && &enc1_delta;
+  wire enc0_forward = enable && enc0_changed && !enc0_invalid &&
+                      (enc0_prev[1] ^ enc_sync[0]);
+  wire enc0_reverse = enable && enc0_changed && !enc0_invalid &&
+                      !(enc0_prev[1] ^ enc_sync[0]);
+  wire enc1_forward = enable && enc1_changed && !enc1_invalid &&
+                      (enc1_prev[1] ^ enc_sync[2]);
+  wire enc1_reverse = enable && enc1_changed && !enc1_invalid &&
+                      !(enc1_prev[1] ^ enc_sync[2]);
 
   /* SPI register interface. */
   wire spi_wr_en;
-  wire [6:0] spi_wr_addr;
+  wire [6:0] spi_addr;
   wire [7:0] spi_wr_data;
-  wire [6:0] spi_rd_addr;
   reg  [7:0] spi_rd_data;
 
   tiny_mce_spi spi (
@@ -158,14 +140,13 @@ module tiny_mce (
       .mosi     (spi_mosi),
       .miso     (spi_miso),
       .wr_en    (spi_wr_en),
-      .wr_addr  (spi_wr_addr),
+      .addr     (spi_addr),
       .wr_data  (spi_wr_data),
-      .rd_addr  (spi_rd_addr),
       .rd_data  (spi_rd_data)
   );
 
   always @* begin
-    case (spi_rd_addr)
+    case (spi_addr)
       REG_CHIP_ID:   spi_rd_data = 8'hc2;
       REG_VERSION:   spi_rd_data = 8'h20;
       REG_CONTROL:   spi_rd_data = control;
@@ -177,24 +158,24 @@ module tiny_mce (
       REG_IRQ_MASK:  spi_rd_data = {3'b000, irq_mask};
       REG_IRQ_FLAGS: spi_rd_data = {3'b000, event_flags};
       REG_ENC0_LO:   spi_rd_data = enc0_count[7:0];
-      REG_ENC0_HI:   spi_rd_data = enc0_count[15:8];
+      REG_ENC0_HI:   spi_rd_data = {4'h0, enc0_count[11:8]};
       REG_ENC1_LO:   spi_rd_data = enc1_count[7:0];
-      REG_ENC1_HI:   spi_rd_data = enc1_count[15:8];
+      REG_ENC1_HI:   spi_rd_data = {4'h0, enc1_count[11:8]};
       REG_CAP_LO:    spi_rd_data = capture_value[7:0];
-      REG_CAP_HI:    spi_rd_data = capture_value[15:8];
+      REG_CAP_HI:    spi_rd_data = {4'h0, capture_value[11:8]};
       REG_TIMER_LO:  spi_rd_data = timer_count[7:0];
-      REG_TIMER_HI:  spi_rd_data = timer_count[15:8];
+      REG_TIMER_HI:  spi_rd_data = {4'h0, timer_count[11:8]};
       REG_CMP_LO:    spi_rd_data = timer_compare[7:0];
-      REG_CMP_HI:    spi_rd_data = timer_compare[15:8];
-      REG_ERR0:      spi_rd_data = enc0_errors;
-      REG_ERR1:      spi_rd_data = enc1_errors;
+      REG_CMP_HI:    spi_rd_data = 8'h00;
+      REG_ERR0:      spi_rd_data = {7'b0000000, event_flags[3]};
+      REG_ERR1:      spi_rd_data = {7'b0000000, event_flags[4]};
       REG_COMMAND:   spi_rd_data = 8'h00;
       REG_BUILD:     spi_rd_data = 8'b0010_0011;
       default:       spi_rd_data = 8'h00;
     endcase
   end
 
-  wire command_write = spi_wr_en && (spi_wr_addr == REG_COMMAND);
+  wire command_write = spi_wr_en && (spi_addr == REG_COMMAND);
   wire clear_enc0 = command_write && spi_wr_data[0];
   wire clear_enc1 = command_write && spi_wr_data[1];
   wire clear_timer = command_write && spi_wr_data[2];
@@ -207,17 +188,16 @@ module tiny_mce (
       pwm_prescale  <= 2'b00;
       deadtime      <= 6'd0;
       irq_mask      <= 5'b00000;
-      timer_compare <= 16'hffff;
+      timer_compare <= 8'hff;
     end else if (spi_wr_en) begin
-      case (spi_wr_addr)
+      case (spi_addr)
         REG_CONTROL:   control       <= spi_wr_data & 8'h0f;
         REG_PWM0_DUTY: pwm0_duty     <= spi_wr_data;
         REG_PWM1_DUTY: pwm1_duty     <= spi_wr_data;
         REG_PWM_CFG:   pwm_prescale  <= spi_wr_data[1:0];
         REG_DEADTIME:  deadtime      <= spi_wr_data[5:0];
         REG_IRQ_MASK:  irq_mask      <= spi_wr_data[4:0];
-        REG_CMP_LO:    timer_compare[7:0]  <= spi_wr_data;
-        REG_CMP_HI:    timer_compare[15:8] <= spi_wr_data;
+        REG_CMP_LO:    timer_compare <= spi_wr_data;
         default: begin end
       endcase
     end
@@ -226,47 +206,39 @@ module tiny_mce (
   /* Free-running timer, input capture and quadrature counters. */
   always @(posedge clk) begin
     if (!rst_n) begin
-      timer_count  <= 16'h0000;
-      capture_value <= 16'h0000;
-      enc0_count   <= 16'h0000;
-      enc1_count   <= 16'h0000;
-      enc0_errors  <= 8'h00;
-      enc1_errors  <= 8'h00;
+      timer_count  <= 12'h000;
+      capture_value <= 12'h000;
+      enc0_count   <= 12'h000;
+      enc1_count   <= 12'h000;
     end else begin
       if (enable)
         timer_count <= timer_count + 1'b1;
       if (clear_timer)
-        timer_count <= 16'h0000;
+        timer_count <= 12'h000;
       if (enable && capture_rise)
         capture_value <= timer_count;
 
       if (clear_enc0) begin
-        enc0_count  <= 16'h0000;
-        enc0_errors <= 8'h00;
+        enc0_count  <= 12'h000;
       end else if (enable && enc0_forward) begin
         enc0_count <= enc0_invert ? enc0_count - 1'b1 : enc0_count + 1'b1;
       end else if (enable && enc0_reverse) begin
         enc0_count <= enc0_invert ? enc0_count + 1'b1 : enc0_count - 1'b1;
-      end else if (enc0_invalid && enc0_errors != 8'hff) begin
-        enc0_errors <= enc0_errors + 1'b1;
       end
 
       if (clear_enc1) begin
-        enc1_count  <= 16'h0000;
-        enc1_errors <= 8'h00;
+        enc1_count  <= 12'h000;
       end else if (enable && enc1_forward) begin
         enc1_count <= enc1_invert ? enc1_count - 1'b1 : enc1_count + 1'b1;
       end else if (enable && enc1_reverse) begin
         enc1_count <= enc1_invert ? enc1_count + 1'b1 : enc1_count - 1'b1;
-      end else if (enc1_invalid && enc1_errors != 8'hff) begin
-        enc1_errors <= enc1_errors + 1'b1;
       end
     end
   end
 
-  wire compare_match = enable && compare_enable && (timer_count == timer_compare);
+  wire compare_match = enable && compare_enable && (timer_count[7:0] == timer_compare);
   wire [4:0] clear_request =
-      (spi_wr_en && (spi_wr_addr == REG_IRQ_FLAGS)) ? spi_wr_data[4:0] : 5'b00000;
+      (spi_wr_en && (spi_addr == REG_IRQ_FLAGS)) ? spi_wr_data[4:0] : 5'b00000;
   wire [4:0] clear_allowed = {clear_request[4:1], clear_request[0] && fault_sync};
   wire [4:0] event_set = enable ?
       {enc1_invalid, enc0_invalid, compare_match, capture_rise, !fault_sync} : 5'b00000;
@@ -392,9 +364,8 @@ module tiny_mce_spi (
     input  wire mosi,
     output reg  miso,
     output reg  wr_en,
-    output reg  [6:0] wr_addr,
+    output reg  [6:0] addr,
     output reg  [7:0] wr_data,
-    output reg  [6:0] rd_addr,
     input  wire [7:0] rd_data
 );
 
@@ -405,15 +376,14 @@ module tiny_mce_spi (
   reg mosi_meta;
   reg mosi_sync;
   reg sclk_prev;
-  reg [4:0] bit_count;
-  reg [7:0] rx_shift;
-  reg [7:0] tx_shift;
+  reg [3:0] bit_count;
+  reg [7:0] shift_reg;
   reg command_is_read;
   reg read_pending;
 
   wire sclk_rise = sclk_sync && !sclk_prev;
   wire sclk_fall = !sclk_sync && sclk_prev;
-  wire [7:0] received_byte = {rx_shift[6:0], mosi_sync};
+  wire [7:0] received_byte = {shift_reg[6:0], mosi_sync};
 
   always @(posedge clk) begin
     if (!rst_n) begin
@@ -424,16 +394,14 @@ module tiny_mce_spi (
       mosi_meta  <= 1'b0;
       mosi_sync  <= 1'b0;
       sclk_prev  <= 1'b0;
-      bit_count  <= 5'd0;
-      rx_shift   <= 8'h00;
-      tx_shift   <= 8'h00;
+      bit_count  <= 4'd0;
+      shift_reg  <= 8'h00;
       command_is_read <= 1'b0;
       read_pending <= 1'b0;
       miso        <= 1'b0;
       wr_en       <= 1'b0;
-      wr_addr     <= 7'h00;
+      addr        <= 7'h00;
       wr_data     <= 8'h00;
-      rd_addr     <= 7'h00;
     end else begin
       cs_meta   <= cs_n;
       cs_sync   <= cs_meta;
@@ -445,38 +413,38 @@ module tiny_mce_spi (
       wr_en <= 1'b0;
 
       if (!enable || cs_sync) begin
-        bit_count <= 5'd0;
-        rx_shift <= 8'h00;
+        bit_count <= 4'd0;
+        shift_reg <= 8'h00;
         command_is_read <= 1'b0;
         read_pending <= 1'b0;
         miso <= 1'b0;
       end else begin
         if (read_pending) begin
-          tx_shift <= rd_data;
+          shift_reg <= rd_data;
           read_pending <= 1'b0;
         end
 
         if (sclk_rise) begin
-          rx_shift <= received_byte;
-          if (bit_count == 5'd7) begin
+          if (!command_is_read || bit_count < 4'd8)
+            shift_reg <= received_byte;
+          if (bit_count == 4'd7) begin
             command_is_read <= received_byte[7];
-            rd_addr <= received_byte[6:0];
-            wr_addr <= received_byte[6:0];
+            addr <= received_byte[6:0];
             if (received_byte[7])
               read_pending <= 1'b1;
-          end else if (bit_count == 5'd15) begin
+          end else if (bit_count == 4'd15) begin
             if (!command_is_read) begin
               wr_data <= received_byte;
               wr_en <= 1'b1;
             end
           end
-          if (bit_count != 5'd31)
+          if (bit_count != 4'd15)
             bit_count <= bit_count + 1'b1;
         end
 
-        if (sclk_fall && bit_count >= 5'd8 && bit_count <= 5'd16) begin
-          miso <= tx_shift[7];
-          tx_shift <= {tx_shift[6:0], 1'b0};
+        if (sclk_fall && command_is_read && bit_count >= 4'd8) begin
+          miso <= shift_reg[7];
+          shift_reg <= {shift_reg[6:0], 1'b0};
         end
       end
     end

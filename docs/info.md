@@ -1,9 +1,9 @@
 ## How it works
 
 TinyMCE is a deterministic dual-channel motor-control companion. Two x4
-quadrature decoders maintain independent 16-bit position counters. Two 8-bit
+quadrature decoders maintain independent 12-bit position counters. Two 8-bit
 PWM channels each generate a complementary high/low pair with programmable
-deadtime. A 16-bit 100 ns timer supports rising-edge input capture and one
+deadtime. A 12-bit 100 ns timer supports rising-edge input capture and one
 compare event. An SPI mode-0 register port configures the engine and reads all
 telemetry.
 
@@ -18,8 +18,8 @@ fault flag cannot be cleared until the external fault input is released.
 2. Read register 0x00 over SPI and expect 0xC2.
 3. Write duty cycles to 0x04/0x05, deadtime to 0x07, then write 0x01 to
    CONTROL (0x02). Observe complementary PWM on uo0..uo3.
-4. Apply 00, 01, 11, 10, 00 to an encoder A/B pair. Its 16-bit count increases
-   by four. A direct 00 to 11 jump increments the associated error register.
+4. Apply 00, 01, 11, 10, 00 to an encoder A/B pair. Its 12-bit count increases
+   by four. A direct 00 to 11 jump sets the associated error flag.
 5. Pull FAULT_N low. All PWM pins must go low immediately and uo4 must latch
    high after synchronization. Release the fault, then W1C IRQ_FLAGS bit 0.
 

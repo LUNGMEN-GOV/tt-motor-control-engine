@@ -30,8 +30,8 @@ circuit on overcurrent, undervoltage or overtemperature.
 - PWM carrier: 39.0625, 19.53125, 9.765625 or 4.8828125 kHz;
 - duty resolution: 8 bits;
 - deadtime: 0 to 6.3 us in 100 ns steps, independent of PWM divider;
-- timer/capture resolution: 100 ns, 6.5536 ms wrap interval;
-- quadrature counters: 16-bit wraparound, x4 edge decoding;
+- timer/capture resolution: 100 ns, 409.6 us wrap interval;
+- quadrature counters: 12-bit wraparound, x4 edge decoding;
 - SPI: mode 0, maximum recommended SCLK 1 MHz;
 - fault response: direct combinational output mask plus synchronized sticky flag.
 
