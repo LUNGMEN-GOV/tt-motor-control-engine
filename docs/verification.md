@@ -18,7 +18,7 @@ The self-checking ModelSim testbench covers:
 Run `vsim -c -do run_modelsim.do` from `test`. The expected marker is
 `TINY_MCE_TEST_PASS`.
 
-Physical signoff is a separate acceptance gate. A release candidate is only
-submission-ready after the official Tiny Tapeout GDS workflow reports a 1x1
-layout, zero setup/hold violations, zero route/Magic DRC violations, LVS clean,
-antenna clean, and acceptable maximum slew/fanout reports.
+The official Tiny Tapeout run for commit `4b7b279` completed a 1x1 layout with
+zero setup/hold, route/Magic DRC, LVS and antenna violations. The test, precheck,
+gate-level test and documentation jobs also passed. Detailed metrics and the
+remaining physical limitations are recorded in [performance.md](performance.md).
