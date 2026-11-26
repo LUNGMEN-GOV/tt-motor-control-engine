@@ -65,6 +65,7 @@ async def test_tiny_mce(dut):
     await reset_dut(dut)
 
     assert int(dut.uio_oe.value) == 0
+    assert int(dut.uo_out.value) & 0x30 == 0
     assert await spi_read(dut, 0x00) == 0xC2
     assert await spi_read(dut, 0x01) == 0x20
     assert await spi_read(dut, 0x17) == 0x23
@@ -94,6 +95,7 @@ async def test_tiny_mce(dut):
     assert await spi_read(dut, 0x09) & 1
     dut.ui_in.value = int(dut.ui_in.value) | 0x08
     await ClockCycles(dut.clk, 5)
+    assert int(dut.uo_out.value) & 0x0F == 0
     await spi_write(dut, 0x09, 1)
     assert await spi_read(dut, 0x09) & 1 == 0
 

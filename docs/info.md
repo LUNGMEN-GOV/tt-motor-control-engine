@@ -9,7 +9,8 @@ telemetry.
 
 FAULT_N has two paths: the raw pin masks all four PWM outputs combinationally,
 while a synchronized copy sets a sticky diagnostic flag and optional IRQ. The
-fault flag cannot be cleared until the external fault input is released.
+fault flag cannot be cleared until the external fault input is released, and
+the sticky flag continues to mask all four outputs until it is cleared.
 
 ## How to test
 
@@ -21,7 +22,8 @@ fault flag cannot be cleared until the external fault input is released.
 4. Apply 00, 01, 11, 10, 00 to an encoder A/B pair. Its 12-bit count increases
    by four. A direct 00 to 11 jump sets the associated error flag.
 5. Pull FAULT_N low. All PWM pins must go low immediately and uo4 must latch
-   high after synchronization. Release the fault, then W1C IRQ_FLAGS bit 0.
+   high after synchronization. Release the fault and confirm PWM remains low,
+   then W1C IRQ_FLAGS bit 0.
 
 The repository includes both a ModelSim self-checking testbench and the
 official cocotb/gate-level test path.

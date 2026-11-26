@@ -20,8 +20,9 @@ for RTL commit `4b7b2795bac388302368da314c4bfa492c0656fd`:
 
 The official GDS, precheck, gate-level simulation and documentation jobs all
 passed. Final utilization is deliberately high to retain the useful feature set
-inside one tile, so the tapeout RTL should now be treated as frozen unless the
-full physical flow is repeated.
+inside one tile. These figures describe commit `4b7b279`; the reset/fault
+interlock correction must complete a fresh full physical flow before its
+submission signoff supersedes these numbers.
 
 The OpenLane report still records non-fatal maximum-slew warnings (worst count
 178 at the slow 100 C / 1.60 V corner) and one maximum-fanout warning. They did
@@ -54,7 +55,8 @@ practical limit.
 `FAULT_N` has a direct combinational mask to all four gate-control outputs, so
 shutdown does not wait for a clock edge. The sticky status and IRQ pass through
 synchronizers and therefore appear after approximately two to three 10 MHz
-cycles. The physical pad-to-output fault delay is not characterized by this
+cycles, then continue masking the outputs until software clears the inactive
+fault. The physical pad-to-output fault delay is not characterized by this
 digital flow and must be measured on silicon.
 
 ## What the design does not drive

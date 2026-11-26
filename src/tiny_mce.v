@@ -85,8 +85,9 @@ module tiny_mce (
 
   always @(posedge clk) begin
     if (!rst_n) begin
-      fault_meta  <= 1'b0;
-      fault_sync  <= 1'b0;
+      /* FAULT_N is inactive high.  Reset high avoids a false startup fault. */
+      fault_meta  <= 1'b1;
+      fault_sync  <= 1'b1;
       enc_meta    <= 4'b0000;
       enc_sync    <= 4'b0000;
       capture_meta <= 1'b0;

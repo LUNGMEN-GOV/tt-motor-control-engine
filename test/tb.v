@@ -133,6 +133,8 @@ module tb;
     repeat (5) @(posedge clk);
 
     check(uo_out[3:0] == 4'b0000, "gate outputs are safe after reset");
+    check(uo_out[4] == 1'b0, "reset does not create a false fault event");
+    check(uo_out[5] == 1'b0, "reset does not create a false IRQ");
     check(uio_oe == 8'h00, "all bidirectional pins remain inputs");
 
     spi_read(7'h00, value);
@@ -180,6 +182,7 @@ module tb;
     check(value[0] == 1'b1, "active fault cannot be cleared");
     ui_in[3] = 1'b1;
     repeat (5) @(posedge clk);
+    check(uo_out[3:0] == 4'b0000, "latched fault keeps gates disabled after release");
     spi_write(7'h09, 8'h01);
     spi_read(7'h09, value);
     check(value[0] == 1'b0, "inactive fault clears with W1C");

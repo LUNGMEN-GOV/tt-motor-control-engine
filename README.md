@@ -33,7 +33,8 @@ circuit on overcurrent, undervoltage or overtemperature.
 - timer/capture resolution: 100 ns, 409.6 us wrap interval;
 - quadrature counters: 12-bit wraparound, x4 edge decoding;
 - SPI: mode 0, maximum recommended SCLK 1 MHz;
-- fault response: direct combinational output mask plus synchronized sticky flag.
+- fault response: direct combinational output mask plus synchronized sticky
+  interlock; PWM remains disabled until software clears the inactive fault.
 
 The official 1x1 SKY130 flow is clean at 10 MHz: worst setup/hold slack is
 +55.04/+0.11 ns, with zero setup/hold, routed DRC, Magic DRC, LVS and antenna
@@ -50,7 +51,8 @@ See [registers](docs/registers.md), [verification](docs/verification.md) and the
 3. Optionally enable event sources in IRQ_MASK.
 4. Set CONTROL bit 0 to start both PWM pairs.
 5. If FAULT_N falls, all four PWM outputs go low immediately. Diagnose the
-   cause, release FAULT_N, then clear IRQ_FLAGS bit 0 with W1C.
+   cause, release FAULT_N, then clear IRQ_FLAGS bit 0 with W1C. Outputs remain
+   low between releasing FAULT_N and clearing the sticky flag.
 
 ## License
 

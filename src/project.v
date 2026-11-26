@@ -48,8 +48,8 @@ module tt_um_lungmen_gov_tiny_mce (
       .spi_miso     (spi_miso)
   );
 
-  /* The raw fault input masks the four gate outputs without waiting for clk. */
-  wire gate_outputs_safe = ena && ui_in[3];
+  /* Raw FAULT_N shuts down immediately; the sticky flag keeps gates disabled. */
+  wire gate_outputs_safe = ena && ui_in[3] && !fault_latched;
   assign uo_out[0] = gate_outputs_safe ? pwm0_h : 1'b0;
   assign uo_out[1] = gate_outputs_safe ? pwm0_l : 1'b0;
   assign uo_out[2] = gate_outputs_safe ? pwm1_h : 1'b0;
