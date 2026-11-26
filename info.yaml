@@ -1,0 +1,41 @@
+# Tiny Tapeout project information
+project:
+  title:        "TinyMCE Motor Control Engine"
+  author:       "Jackson Haley"
+  discord:      ""
+  description:  "Dual quadrature decoder and two complementary PWM pairs with deadtime, capture, compare, SPI and immediate fault shutdown"
+  language:     "Verilog"
+  clock_hz:     10000000
+  tiles:        "1x1"
+  top_module:   "tt_um_lungmen_gov_tiny_mce"
+  source_files:
+    - "project.v"
+    - "tiny_mce.v"
+
+pinout:
+  ui[0]: "SPI_CS_N"
+  ui[1]: "SPI_SCLK"
+  ui[2]: "SPI_MOSI"
+  ui[3]: "FAULT_N"
+  ui[4]: "ENC0_A"
+  ui[5]: "ENC0_B"
+  ui[6]: "ENC1_A"
+  ui[7]: "ENC1_B"
+  uo[0]: "PWM0_H"
+  uo[1]: "PWM0_L"
+  uo[2]: "PWM1_H"
+  uo[3]: "PWM1_L"
+  uo[4]: "FAULT_LATCHED"
+  uo[5]: "IRQ"
+  uo[6]: "PWM_SYNC"
+  uo[7]: "SPI_MISO"
+  uio[0]: "CAPTURE_IN"
+  uio[1]: "RESERVED_IN1"
+  uio[2]: "RESERVED_IN2"
+  uio[3]: "RESERVED_IN3"
+  uio[4]: "RESERVED_IN4"
+  uio[5]: "RESERVED_IN5"
+  uio[6]: "RESERVED_IN6"
+  uio[7]: "RESERVED_IN7"
+
+yaml_version: 6
